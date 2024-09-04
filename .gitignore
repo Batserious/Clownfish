@@ -1,0 +1,110 @@
+# Compiled object files
+*.o
+*.obj
+
+# Compiled dynamic libraries
+*.so
+*.dll
+*.dylib
+
+# Compiled static libraries
+*.a
+*.lib
+
+# Executable files
+*.exe
+*.out
+
+# CMake generated files and directories
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+
+# Ignore all build directories
+*build*/
+
+# Ignore common CMake output files
+*.dir/
+*.cmake
+*.ninja
+*.ninja_deps
+*.ninja_log
+rules.ninja
+
+# Dependencies
+deps/
+
+# CMake exported compile commands
+compile_commands.json
+
+# Automated test results
+Testing/
+
+# IDE-specific files
+
+# Visual Studio
+*.vcxproj
+*.vcxproj.filters
+*.pdb
+*.sdf
+*.opensdf
+*.vcxproj.user
+*.suo
+*.user
+*.ipch
+*.idb
+*.ipdb
+*.tlog/
+*.lastbuildstate
+
+# CLion and other JetBrains IDEs
+.idea/
+*.iml
+*.iws
+
+# Code::Blocks
+*.cbp
+*.depend
+*.layout
+
+# Xcode
+*.xcworkspace/
+*.xcuserdata/
+*.xcodeproj/*.pbxuser
+*.xcodeproj/*.mode1v3
+*.xcodeproj/*.mode2v3
+*.xcodeproj/*.perspectivev3
+*.xcodeproj/xcuserdata
+
+# Qt Creator
+*.pro.user
+*.pro.user.*
+*.qmake.stash
+*.qmake.cache
+*.pro.user.linux.conf
+*.qtc_clangd/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+*.lnk
+$RECYCLE.BIN/
+
+# System-specific files
+
+# Linux / Unix
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+*.temp

@@ -7,42 +7,72 @@
 #include <mutex>
 
 
-template <typename T>
-concept Enum = std::is_enum_v<T>;
-
-template <Enum TState, Enum TTrigger>
-class StateMachine
+namespace Clownfish
 {
-public:
-    StateMachine() = default;
-    ~StateMachine() = default;
+    template <typename T>
+    concept Enum = std::is_enum_v<T>;
 
-    void SetInitialState(TState state)
+    template <Enum TState, Enum TTrigger>
+    class StateMachine
     {
-        current = state;
-    }
+    public:
+        StateMachine() = default;
+        ~StateMachine() = default;
 
-    void Permit(TState source, TTrigger trigger, TState target, std::function<void()> action = nullptr)
-    {
-        transitions[source][trigger].first = target;
-        transitions[source][trigger].second = action;
-    }
+        class StateConfigHelper : std::enable_shared_from_this<StateConfigHelper>
+        {
+        public:
+            StateConfigHelper() = delete;
+            StateConfigHelper(StateMachine* state_machine, TState state) : state_machine(state_machine), state(state)
+            {
 
-    void Touch(TTrigger trigger)
-    {
-        std::lock_guard<std::mutex> locker(mutex);
-        auto action = transitions[current][trigger].second;
-        current = transitions[current][trigger].first;
-        action();
-    }
+            }
 
-private:
-    TState current;
+            ~StateConfigHelper() = default;
 
-    std::mutex mutex;
+            StateConfigHelper* Permit(TTrigger trigger, TState target, std::function<void()> action = nullptr)
+            {
+                state_machine->transitions[state][trigger].first = target;
+                state_machine->transitions[state][trigger].second = action;
 
-    std::map<TState, std::map<TTrigger, std::pair<TState, std::function<void()>>>> transitions;
-};
+                return this;
+            }
+
+        private:
+            StateMachine* state_machine;
+            TState state;
+        };
+
+        friend StateConfigHelper;
+
+        void SetInitialState(TState state)
+        {
+            current = state;
+        }
+
+        std::shared_ptr<StateConfigHelper> Configure(TState state)
+        {
+            StateConfigHelper helper(this, state);
+            auto ptr = std::make_shared<StateConfigHelper>(helper);
+            return ptr;
+        }
+
+        void Touch(TTrigger trigger)
+        {
+            std::lock_guard<std::mutex> locker(mutex);
+            auto action = transitions[current][trigger].second;
+            current = transitions[current][trigger].first;
+            action();
+        }
+
+    private:
+        TState current;
+
+        std::mutex mutex;
+
+        std::map<TState, std::map<TTrigger, std::pair<TState, std::function<void()>>>> transitions;
+    };
+}
 
 
 #endif //STATEMACHINE_HPP

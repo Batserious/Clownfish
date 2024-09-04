@@ -16,16 +16,18 @@ enum class Trigger
 
 int main(int argc, char* argv[])
 {
-    StateMachine<State, Trigger> machine;
+    Clownfish::StateMachine<State, Trigger> machine;
 
-    machine.Permit(State::On, Trigger::TurnOff, State::Off, []()
-    {
-        std::cout << "Turn off." << std::endl;
-    });
-
-    machine.Permit(State::Off, Trigger::TurnOn, State::On, []()
+    machine.Configure(State::On)
+    ->Permit(Trigger::TurnOff, State::Off, []()
     {
         std::cout << "Turn on." << std::endl;
+    });
+
+    machine.Configure(State::Off)
+    ->Permit(Trigger::TurnOn, State::On, []()
+    {
+        std::cout << "Turn off." << std::endl;
     });
 
     machine.SetInitialState(State::Off);

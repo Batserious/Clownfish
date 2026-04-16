@@ -1,0 +1,61 @@
+# 编译输出
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+
+# 编译中间文件
+*.class
+*.gcno
+*.gcda
+
+# CMake构建目录
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+
+# IDE相关文件
+# CLion
+.idea/
+*.iml
+cmake-build-*/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# 其他IDE
+*.sln
+*.vcxproj*
+*.filters
+*.user
+
+# 依赖目录
+deps/
+third_party/
+vendor/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
+
+# 临时文件
+*~
+*.swp
+*.swo
+
+# 包管理器
+conan.lock
+conanfile.pyc

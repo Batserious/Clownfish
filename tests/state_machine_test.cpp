@@ -16,13 +16,13 @@ using namespace Clownfish;
 // ---------------------------------------------------------------------------
 // Common enums used across tests (mirrors State.cs / Trigger.cs in C# tests)
 // ---------------------------------------------------------------------------
-enum class State { A, B, C, D };
+enum class State { A, B, C };
 enum class Trigger { X, Y, Z };
 
 // ---------------------------------------------------------------------------
 // Helper
 // ---------------------------------------------------------------------------
-static StateMachine<State, Trigger> MakeSimpleMachine(State initial = State::B)
+static StateMachine<State, Trigger> MakeSimpleMachine(const State initial = State::B)
 {
     return StateMachine<State, Trigger>(initial);
 }
@@ -135,7 +135,7 @@ TEST(StateMachineTest, PermittedTriggersAreDistinct)
 
     auto permitted = sm.GetPermittedTriggers();
     // X should appear only once
-    int count = (int)std::count(permitted.begin(), permitted.end(), Trigger::X);
+    int count = static_cast<int>(std::count(permitted.begin(), permitted.end(), Trigger::X));
     EXPECT_EQ(1, count);
 }
 
@@ -307,13 +307,13 @@ TEST(StateMachineTest, TransitionEventOrderIsCorrect)
 
     sm.Configure(State::B)
         .Permit(Trigger::X, State::A)
-        .OnExit([&]() { order.push_back("OnExit"); });
+        .OnExit([&]() { order.emplace_back("OnExit"); });
 
     sm.Configure(State::A)
-        .OnEntry([&]() { order.push_back("OnEntry"); });
+        .OnEntry([&]() { order.emplace_back("OnEntry"); });
 
-    sm.OnTransitioned([&](const auto&) { order.push_back("OnTransitioned"); });
-    sm.OnTransitionCompleted([&](const auto&) { order.push_back("OnTransitionCompleted"); });
+    sm.OnTransitioned([&](const auto&) { order.emplace_back("OnTransitioned"); });
+    sm.OnTransitionCompleted([&](const auto&) { order.emplace_back("OnTransitionCompleted"); });
 
     sm.Fire(Trigger::X);
 

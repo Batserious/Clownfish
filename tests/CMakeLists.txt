@@ -3,7 +3,7 @@ project(Tests)
 
 add_executable(Test)
 
-file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "*.cpp")
+file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "*.cc")
 target_sources(Test PRIVATE ${TEST_SOURCES})
 
 find_package(GTest REQUIRED)

@@ -10,7 +10,7 @@
 - 分层状态支持：`SubstateOf` + `InitialTransition`
 - 回调机制：`OnEntry` / `OnExit` / `OnTransitioned` / `OnTransitionCompleted`
 - 参数化触发器：`SetTriggerParameters<T...>()` + 运行时参数校验
-- 异步 API：`FireAsync`、异步回调与异步 Entry/Exit/Activate/Deactivate
+- 异步 API：`TriggerAsync`、异步回调与异步 Entry/Exit/Activate/Deactivate
 - 两种触发模式：`FiringMode::Immediate` 与 `FiringMode::Queued`
 
 ## 适用场景
@@ -68,7 +68,7 @@ int main() {
     sm.Configure(State::Idle)
       .Permit(Trigger::Start, State::Running);
 
-    sm.Fire(Trigger::Start);
+    sm.Trigger(Trigger::Start);
     return sm.State() == State::Running ? 0 : 1;
 }
 ```
@@ -84,7 +84,13 @@ int main() {
 
 ## 测试覆盖
 
-`tests/state_machine_test.cpp` 包含大量单元测试，覆盖：
+测试文件按类型拆分：
+
+- `tests/state_machine_normal_test.cc`
+- `tests/state_machine_error_test.cc`
+- `tests/state_machine_edge_test.cc`
+
+覆盖内容包括：
 
 - 基础迁移与外部状态存储
 - 分层状态行为与循环配置检测
@@ -93,4 +99,5 @@ int main() {
 - 参数化触发器校验
 - Dynamic/Internal transition
 - Initial transition
-- `FireAsync` 基础行为
+- `TriggerAsync` 基础行为
+

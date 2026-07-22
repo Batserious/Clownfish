@@ -52,7 +52,7 @@ void RunBasicTransitionExample() {
                   << " -> " << StateName(transition.destination) << "\n";
     });
 
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     std::cout << "  current state: " << StateName(sm.State()) << "\n";
 }
 
@@ -90,7 +90,7 @@ void RunFireAsyncExample() {
         });
     });
 
-    sm.FireAsync(Trigger::X).get();
+    sm.TriggerAsync(Trigger::X).get();
 
     if (sm.State() != State::B || !transitioned_sync || !transitioned_async || !completed_async) {
         throw std::logic_error("FireAsync example validation failed.");
@@ -109,7 +109,7 @@ void RunGuardAndParametersExample() {
     sm.Configure(State::A).PermitIf(Trigger::X, State::B, [&allow]() { return allow; }, "allow flag must be true");
 
     std::vector<std::string> unmet;
-    if (!sm.CanFire(Trigger::X, {}, unmet)) {
+    if (!sm.CanTrigger(Trigger::X, {}, unmet)) {
         std::cout << "  CanFire(X)=false, unmet guards:";
         for (const auto& g : unmet) {
             std::cout << " [" << g << "]";
@@ -125,7 +125,7 @@ void RunGuardAndParametersExample() {
     });
 
     allow = true;
-    sm.Fire(x, std::string("hello"), 42);
+    sm.Trigger(x, std::string("hello"), 42);
 
     std::cout << "  current state: " << StateName(sm.State()) << "\n";
     std::cout << "  entry parameters: text=" << receivedText << ", number=" << receivedNumber << "\n";
@@ -146,11 +146,10 @@ void RunHierarchyAndInitialTransitionExample() {
                   << " -> " << StateName(transition.destination) << "\n";
     });
 
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
 
     std::cout << "  current state: " << StateName(sm.State()) << "\n";
     std::cout << "  IsInState(C): " << (sm.IsInState(State::C) ? "true" : "false") << "\n";
 }
 
 }  // namespace examples
-

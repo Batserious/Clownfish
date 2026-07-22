@@ -10,7 +10,7 @@ TEST(StateMachineNormalTest, CanUseEnumMarkers)
 {
     auto sm = MakeSimpleMachine(State::A);
     sm.Configure(State::A).Permit(Trigger::X, State::B);
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     EXPECT_EQ(State::B, sm.State());
 }
 
@@ -23,7 +23,7 @@ TEST(StateMachineNormalTest, StateCanBeStoredExternally)
     sm.Configure(State::B).Permit(Trigger::X, State::C);
     EXPECT_EQ(State::B, sm.State());
     EXPECT_EQ(State::B, state);
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     EXPECT_EQ(State::C, sm.State());
     EXPECT_EQ(State::C, state);
 }
@@ -36,7 +36,7 @@ TEST(StateMachineNormalTest, StateMutatorCalledOnlyOnce)
         [&]() { return state; },
         [&](const State& s) { state = s; ++count; });
     sm.Configure(State::B).Permit(Trigger::X, State::C);
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     EXPECT_EQ(1, count);
 }
 
@@ -53,7 +53,7 @@ TEST(StateMachineNormalTest, WhenInSubstate_TriggerIgnoredInSuperstate_RemainsIn
     auto sm = MakeSimpleMachine(State::B);
     sm.Configure(State::B).SubstateOf(State::C);
     sm.Configure(State::C).Ignore(Trigger::X);
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     EXPECT_EQ(State::B, sm.State());
 }
 
@@ -72,8 +72,8 @@ TEST(StateMachineNormalTest, WhenInSubstate_TriggerSuperStateTwice_DoesNotReente
     sm.Configure(State::C)
         .Permit(Trigger::X, State::B);
 
-    sm.Fire(Trigger::X);
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
+    sm.Trigger(Trigger::X);
 
     EXPECT_EQ(1, eCount);
 }
@@ -117,7 +117,7 @@ TEST(StateMachineNormalTest, WhenDiscriminatedByGuard_ChoosesPermittedTransition
     sm.Configure(State::B)
         .PermitIf(Trigger::X, State::A, []() { return false; })
         .PermitIf(Trigger::X, State::C, []() { return true; });
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     EXPECT_EQ(State::C, sm.State());
 }
 
@@ -129,7 +129,7 @@ TEST(StateMachineNormalTest, GuardClauseCalledOnlyOnce)
         ++callCount;
         return true;
     });
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     EXPECT_EQ(1, callCount);
 }
 
@@ -140,7 +140,7 @@ TEST(StateMachineNormalTest, WhenTriggerIsIgnored_ActionsNotExecuted)
     sm.Configure(State::B)
         .OnEntry([&]() { fired = true; })
         .Ignore(Trigger::X);
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     EXPECT_FALSE(fired);
 }
 
@@ -151,7 +151,7 @@ TEST(StateMachineNormalTest, IfSelfTransitionPermitted_ActionsFire)
     sm.Configure(State::B)
         .OnEntry([&]() { fired = true; })
         .PermitReentry(Trigger::X);
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     EXPECT_TRUE(fired);
 }
 
@@ -164,8 +164,8 @@ TEST(StateMachineNormalTest, IgnoreVsPermitReentry_OnlyReentryFiresEntry)
         .PermitReentry(Trigger::X)
         .Ignore(Trigger::Y);
 
-    sm.Fire(Trigger::X);
-    sm.Fire(Trigger::Y);
+    sm.Trigger(Trigger::X);
+    sm.Trigger(Trigger::Y);
     EXPECT_EQ(1, numCalls);
 }
 
@@ -184,7 +184,7 @@ TEST(StateMachineNormalTest, OnExitFiresOnlyOnceReentrySubstate)
         .OnEntry([&]() { entryB++; })
         .OnExit([&]() { exitB++; });
 
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
 
     EXPECT_EQ(0, exitB);
     EXPECT_EQ(0, entryB);
@@ -206,7 +206,7 @@ TEST(StateMachineNormalTest, TransitionToSuperstateDoesNotExitSuperstate)
         .Permit(Trigger::Y, State::A)
         .OnExit([&]() { subExit = true; });
 
-    sm.Fire(Trigger::Y);
+    sm.Trigger(Trigger::Y);
 
     EXPECT_TRUE(subExit);
     EXPECT_FALSE(superEntry);
@@ -226,7 +226,7 @@ TEST(StateMachineNormalTest, WhenTransitionOccurs_OnTransitionedEventFires)
         captured = &stored;
     });
 
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
 
     ASSERT_NE(nullptr, captured);
     EXPECT_EQ(Trigger::X, stored.trigger);
@@ -247,7 +247,7 @@ TEST(StateMachineNormalTest, WhenTransitionOccurs_OnTransitionCompletedEventFire
         fired = true;
     });
 
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     EXPECT_TRUE(fired);
 }
 
@@ -266,7 +266,7 @@ TEST(StateMachineNormalTest, TransitionEventOrderIsCorrect)
     sm.OnTransitioned([&](const auto&) { order.emplace_back("OnTransitioned"); });
     sm.OnTransitionCompleted([&](const auto&) { order.emplace_back("OnTransitionCompleted"); });
 
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
 
     ASSERT_EQ(4u, order.size());
     EXPECT_EQ("OnExit", order[0]);
@@ -279,14 +279,14 @@ TEST(StateMachineNormalTest, CanFirePermittedTrigger)
 {
     auto sm = MakeSimpleMachine(State::A);
     sm.Configure(State::A).Permit(Trigger::X, State::B);
-    EXPECT_TRUE(sm.CanFire(Trigger::X));
+    EXPECT_TRUE(sm.CanTrigger(Trigger::X));
 }
 
 TEST(StateMachineNormalTest, CanFireReturnsFalseWhenGuardFails)
 {
     auto sm = MakeSimpleMachine(State::B);
     sm.Configure(State::B).PermitIf(Trigger::X, State::A, []() { return false; });
-    EXPECT_FALSE(sm.CanFire(Trigger::X));
+    EXPECT_FALSE(sm.CanTrigger(Trigger::X));
 }
 
 TEST(StateMachineNormalTest, CanFire_ReturnsUnmetGuardDescriptions)
@@ -296,7 +296,7 @@ TEST(StateMachineNormalTest, CanFire_ReturnsUnmetGuardDescriptions)
     sm.Configure(State::A).PermitIf(Trigger::X, State::B, []() { return false; }, desc);
 
     std::vector<std::string> unmet;
-    bool result = sm.CanFire(Trigger::X, StateMachine<State, Trigger>::Args{}, unmet);
+    bool result = sm.CanTrigger(Trigger::X, StateMachine<State, Trigger>::Args{}, unmet);
 
     EXPECT_FALSE(result);
     ASSERT_EQ(1u, unmet.size());
@@ -319,7 +319,7 @@ TEST(StateMachineNormalTest, ParametersPassedToEntryAction)
             entryArgI = std::any_cast<int>(t.parameters[1]);
         });
 
-    sm.Fire(x, std::string("something"), 42);
+    sm.Trigger(x, std::string("something"), 42);
 
     EXPECT_EQ("something", entryArgS);
     EXPECT_EQ(42, entryArgI);
@@ -330,7 +330,7 @@ TEST(StateMachineNormalTest, ParameterizedGuard_TransitionsWhenTrue)
     auto sm = MakeSimpleMachine(State::A);
     auto x = sm.SetTriggerParameters<int>(Trigger::X);
     sm.Configure(State::A).PermitIf(Trigger::X, State::B, []() { return true; });
-    sm.Fire(x, 2);
+    sm.Trigger(x, 2);
     EXPECT_EQ(State::B, sm.State());
 }
 
@@ -339,7 +339,7 @@ TEST(StateMachineNormalTest, PermitDynamic_SelectsDestination)
     auto sm = MakeSimpleMachine(State::A);
     bool goToB = true;
     sm.Configure(State::A).PermitDynamic(Trigger::X, [&]() { return goToB ? State::B : State::C; });
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     EXPECT_EQ(State::B, sm.State());
 }
 
@@ -349,7 +349,7 @@ TEST(StateMachineNormalTest, PermitDynamicIf_SelectsDestinationWhenGuardTrue)
     sm.Configure(State::A)
         .PermitDynamicIf(Trigger::X, []() { return State::B; }, []() { return true; })
         .PermitDynamicIf(Trigger::X, []() { return State::C; }, []() { return false; });
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     EXPECT_EQ(State::B, sm.State());
 }
 
@@ -359,8 +359,8 @@ TEST(StateMachineNormalTest, InternalTransition_DoesNotChangeState)
     int actionCount = 0;
     sm.Configure(State::A).InternalTransition(Trigger::X, [&]() { actionCount++; });
 
-    sm.Fire(Trigger::X);
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
+    sm.Trigger(Trigger::X);
 
     EXPECT_EQ(State::A, sm.State());
     EXPECT_EQ(2, actionCount);
@@ -376,7 +376,7 @@ TEST(StateMachineNormalTest, InternalTransition_DoesNotFireEntryOrExit)
         .OnExit([&]() { exitFired = true; })
         .InternalTransition(Trigger::X, []() {});
 
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
 
     EXPECT_FALSE(entryFired);
     EXPECT_FALSE(exitFired);
@@ -395,7 +395,7 @@ TEST(StateMachineNormalTest, InitialTransition_EntersSubstateOnEntry)
     sm.Configure(State::A)
         .Permit(Trigger::X, State::C);
 
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
     EXPECT_EQ(State::B, sm.State());
 }
 
@@ -436,21 +436,20 @@ TEST(StateMachineNormalTest, OnEntryFrom_FiresOnlyForMatchingTrigger)
         .OnEntry([&]() { anyEntryCount++; })
         .OnEntryFrom(Trigger::X, [&]() { fromXCount++; });
 
-    sm.Fire(Trigger::X);
-    sm.Fire(Trigger::Y);
+    sm.Trigger(Trigger::X);
+    sm.Trigger(Trigger::Y);
 
     EXPECT_EQ(2, anyEntryCount);
     EXPECT_EQ(1, fromXCount);
 }
 
-TEST(StateMachineNormalTest, FireAsync_BasicTransition)
+TEST(StateMachineNormalTest, TriggerAsync_BasicTransition)
 {
     auto sm = MakeSimpleMachine(State::A);
     sm.Configure(State::A).Permit(Trigger::X, State::B);
 
-    auto f = sm.FireAsync(Trigger::X);
+    auto f = sm.TriggerAsync(Trigger::X);
     f.get();
 
     EXPECT_EQ(State::B, sm.State());
 }
-

@@ -11,7 +11,7 @@ TEST(StateMachineEdgeTest, WhenUnhandledTriggerIsFired_ProvidedHandlerIsCalled)
         capturedTrigger = t;
     });
 
-    sm.Fire(Trigger::Z);
+    sm.Trigger(Trigger::Z);
 
     EXPECT_EQ(State::B, capturedState);
     EXPECT_EQ(Trigger::Z, capturedTrigger);
@@ -24,9 +24,9 @@ TEST(StateMachineEdgeTest, QueuedMode_ReentrantFireInEntryAction_IsProcessed)
     sm.Configure(State::A).Permit(Trigger::X, State::B);
     sm.Configure(State::B)
         .Permit(Trigger::Y, State::C)
-        .OnEntry([&]() { sm.Fire(Trigger::Y); });
+        .OnEntry([&]() { sm.Trigger(Trigger::Y); });
 
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
 
     EXPECT_EQ(State::C, sm.State());
 }
@@ -38,10 +38,9 @@ TEST(StateMachineEdgeTest, ImmediateMode_ReentrantFireInEntryAction_IsProcessed)
     sm.Configure(State::A).Permit(Trigger::X, State::B);
     sm.Configure(State::B)
         .Permit(Trigger::Y, State::C)
-        .OnEntry([&]() { sm.Fire(Trigger::Y); });
+        .OnEntry([&]() { sm.Trigger(Trigger::Y); });
 
-    sm.Fire(Trigger::X);
+    sm.Trigger(Trigger::X);
 
     EXPECT_EQ(State::C, sm.State());
 }
-

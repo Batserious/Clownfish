@@ -804,35 +804,35 @@ namespace Clownfish {
             return configured;
         }
 
-        void Fire(const TTrigger& trigger) {
-            InternalFire(trigger, Args{});
+        void Trigger(const TTrigger& trigger) {
+            InternalTrigger(trigger, Args{});
         }
 
-        void Fire(const TTrigger& trigger, const Args& args) {
-            InternalFire(trigger, args);
+        void Trigger(const TTrigger& trigger, const Args& args) {
+            InternalTrigger(trigger, args);
         }
 
         template <typename... TArgs>
-        void Fire(const TriggerWithParametersT<TArgs...>& trigger, TArgs... args) {
+        void Trigger(const TriggerWithParametersT<TArgs...>& trigger, TArgs... args) {
             Args packed;
             packed.reserve(sizeof...(TArgs));
             (packed.emplace_back(std::move(args)), ...);
             trigger.ValidateParameters(packed);
-            InternalFire(trigger.Trigger(), packed);
+            InternalTrigger(trigger.Trigger(), packed);
         }
 
-        void Fire(const TriggerWithParameters& trigger, const Args& args) {
+        void Trigger(const TriggerWithParameters& trigger, const Args& args) {
             trigger.ValidateParameters(args);
-            InternalFire(trigger.Trigger(), args);
+            InternalTrigger(trigger.Trigger(), args);
         }
 
-        bool CanFire(const TTrigger& trigger) {
+        bool CanTrigger(const TTrigger& trigger) {
             TriggerBehaviourResult result;
             auto& rep = CurrentRepresentation();
             return rep.TryFindHandler(trigger, Args{}, result) && result.unmet_guard_conditions.empty();
         }
 
-        bool CanFire(const TTrigger& trigger, const Args& args, std::vector<std::string>& unmetGuards) {
+        bool CanTrigger(const TTrigger& trigger, const Args& args, std::vector<std::string>& unmetGuards) {
             TriggerBehaviourResult result;
             auto& rep = CurrentRepresentation();
             if (!rep.TryFindHandler(trigger, args, result)) {
@@ -899,7 +899,7 @@ namespace Clownfish {
             on_transition_completed_.push_back(std::move(callback));
         }
 
-        // Async callback registration (invoked after sync callbacks in FireAsync).
+        // Async callback registration (invoked after sync callbacks in TriggerAsync).
         void OnTransitionedAsync(std::function<std::future<void>(const Transition&)> callback) {
             on_transitioned_async_.push_back(std::move(callback));
         }
@@ -917,21 +917,21 @@ namespace Clownfish {
 
         // ── Async public API ──────────────────────────────────────────────────
 
-        std::future<void> FireAsync(const TTrigger& trigger) {
-            return InternalFireAsync(trigger, Args{});
+        std::future<void> TriggerAsync(const TTrigger& trigger) {
+            return InternalTriggerAsync(trigger, Args{});
         }
 
-        std::future<void> FireAsync(const TTrigger& trigger, const Args& args) {
-            return InternalFireAsync(trigger, args);
+        std::future<void> TriggerAsync(const TTrigger& trigger, const Args& args) {
+            return InternalTriggerAsync(trigger, args);
         }
 
         template <typename... TArgs>
-        std::future<void> FireAsync(const TriggerWithParametersT<TArgs...>& trigger, TArgs... args) {
+        std::future<void> TriggerAsync(const TriggerWithParametersT<TArgs...>& trigger, TArgs... args) {
             Args packed;
             packed.reserve(sizeof...(TArgs));
             (packed.emplace_back(std::move(args)), ...);
             trigger.ValidateParameters(packed);
-            return InternalFireAsync(trigger.Trigger(), packed);
+            return InternalTriggerAsync(trigger.Trigger(), packed);
         }
 
         std::future<void> ActivateAsync() {
@@ -972,20 +972,20 @@ namespace Clownfish {
             state_mutator_(state);
         }
 
-        void InternalFire(const TTrigger& trigger, const Args& args) {
+        void InternalTrigger(const TTrigger& trigger, const Args& args) {
             switch (firing_mode_) {
                 case FiringMode::Immediate:
-                    InternalFireOne(trigger, args);
+                    InternalTriggerOne(trigger, args);
                     return;
                 case FiringMode::Queued:
-                    InternalFireQueued(trigger, args);
+                    InternalTriggerQueued(trigger, args);
                     return;
                 default:
                     throw std::logic_error("Unknown firing mode.");
             }
         }
 
-        void InternalFireQueued(const TTrigger& trigger, const Args& args) {
+        void InternalTriggerQueued(const TTrigger& trigger, const Args& args) {
             event_queue_.push(QueuedTrigger{trigger, args});
 
             if (firing_) {
@@ -997,7 +997,7 @@ namespace Clownfish {
                 while (!event_queue_.empty()) {
                     auto queued = event_queue_.front();
                     event_queue_.pop();
-                    InternalFireOne(queued.trigger, queued.args);
+                    InternalTriggerOne(queued.trigger, queued.args);
                 }
             } catch (...) {
                 firing_ = false;
@@ -1007,7 +1007,7 @@ namespace Clownfish {
             firing_ = false;
         }
 
-        void InternalFireOne(const TTrigger& trigger, const Args& args) {
+        void InternalTriggerOne(const TTrigger& trigger, const Args& args) {
             auto configured = trigger_configuration_.find(trigger);
             if (configured != trigger_configuration_.end()) {
                 configured->second.ValidateParameters(args);
@@ -1172,9 +1172,9 @@ namespace Clownfish {
             return ChainFutures(std::move(futures));
         }
 
-        // ── Async internal fire ───────────────────────────────────────────────
+        // ── Async internal trigger ───────────────────────────────────────────────
 
-        std::future<void> InternalFireAsync(const TTrigger& trigger, const Args& args) {
+        std::future<void> InternalTriggerAsync(const TTrigger& trigger, const Args& args) {
             // Queued async: enqueue then drain on background thread.
             return std::async(std::launch::async, [this, trigger, args]() mutable {
                 async_event_queue_.push(QueuedTrigger{trigger, args});
@@ -1189,7 +1189,7 @@ namespace Clownfish {
                         // for single-producer use this pattern is safe.
                         auto queued = async_event_queue_.front();
                         async_event_queue_.pop();
-                        InternalFireOneAsync(queued.trigger, queued.args).get();
+                        InternalTriggerOneAsync(queued.trigger, queued.args).get();
                     }
                 } catch (...) {
                     async_firing_.store(false);
@@ -1199,7 +1199,7 @@ namespace Clownfish {
             });
         }
 
-        std::future<void> InternalFireOneAsync(const TTrigger& trigger, const Args& args) {
+        std::future<void> InternalTriggerOneAsync(const TTrigger& trigger, const Args& args) {
             auto configured = trigger_configuration_.find(trigger);
             if (configured != trigger_configuration_.end()) {
                 configured->second.ValidateParameters(args);

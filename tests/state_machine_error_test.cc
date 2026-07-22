@@ -3,7 +3,7 @@
 TEST(StateMachineErrorTest, ExceptionThrownForInvalidTransition)
 {
     auto sm = MakeSimpleMachine(State::A);
-    EXPECT_THROW(sm.Fire(Trigger::X), std::logic_error);
+    EXPECT_THROW(sm.Trigger(Trigger::X), std::logic_error);
 }
 
 TEST(StateMachineErrorTest, ImplicitReentryIsDisallowed)
@@ -47,7 +47,7 @@ TEST(StateMachineErrorTest, InitialTransitionTargetMustBeSubstate)
     sm.Configure(State::C).InitialTransition(State::B);
     sm.Configure(State::A).Permit(Trigger::X, State::C);
 
-    EXPECT_THROW(sm.Fire(Trigger::X), std::logic_error);
+    EXPECT_THROW(sm.Trigger(Trigger::X), std::logic_error);
 }
 
 TEST(StateMachineErrorTest, FireWithConfiguredTrigger_ThrowsWhenParameterCountMismatch)
@@ -59,7 +59,7 @@ TEST(StateMachineErrorTest, FireWithConfiguredTrigger_ThrowsWhenParameterCountMi
     StateMachine<State, Trigger>::Args wrongArgs{std::string("only one")};
     const StateMachine<State, Trigger>::TriggerWithParameters& trigger = x;
 
-    EXPECT_THROW(sm.Fire(trigger, wrongArgs), std::invalid_argument);
+    EXPECT_THROW(sm.Trigger(trigger, wrongArgs), std::invalid_argument);
 }
 
 TEST(StateMachineErrorTest, FireWithConfiguredTrigger_ThrowsWhenParameterTypeMismatch)
@@ -71,7 +71,7 @@ TEST(StateMachineErrorTest, FireWithConfiguredTrigger_ThrowsWhenParameterTypeMis
     StateMachine<State, Trigger>::Args wrongArgs{42, 7};
     const StateMachine<State, Trigger>::TriggerWithParameters& trigger = x;
 
-    EXPECT_THROW(sm.Fire(trigger, wrongArgs), std::invalid_argument);
+    EXPECT_THROW(sm.Trigger(trigger, wrongArgs), std::invalid_argument);
 }
 
 TEST(StateMachineErrorTest, MultiplePermittedTransitionsForSameTrigger_Throws)
@@ -81,6 +81,5 @@ TEST(StateMachineErrorTest, MultiplePermittedTransitionsForSameTrigger_Throws)
         .PermitIf(Trigger::X, State::B, []() { return true; })
         .PermitIf(Trigger::X, State::C, []() { return true; });
 
-    EXPECT_THROW(sm.Fire(Trigger::X), std::logic_error);
+    EXPECT_THROW(sm.Trigger(Trigger::X), std::logic_error);
 }
-
